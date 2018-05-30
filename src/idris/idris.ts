@@ -44,7 +44,7 @@ export const conf: IRichLanguageConfiguration = {
 export const language = <ILanguage>{
 	defaultToken: '',
 	ignoreCase: true,
-	tokenPostfix: '.coffee',
+	tokenPostfix: '.idr',
 
 	brackets: [
 		{ open: '{', close: '}', token: 'delimiter.curly' },

@@ -10,9 +10,9 @@ import { registerLanguage } from '../_.contribution';
 const _monaco: typeof monaco = (typeof monaco === 'undefined' ? (<any>self).monaco : monaco);
 
 registerLanguage({
-	id: 'yaml',
-	extensions: ['.yaml', '.yml'],
-	aliases: ['YAML', 'yaml', 'YML', 'yml'],
-	mimetypes: ['application/x-yaml'],
-	loader: () => _monaco.Promise.wrap(import('./yaml'))
+	id: 'idris',
+	extensions: ['.idr'],
+	aliases: ['Idris', 'idris'],
+	//mimetypes: ['text/x-coffeescript', 'text/coffeescript'],
+	loader: () => _monaco.Promise.wrap(import('./idris'))
 });
