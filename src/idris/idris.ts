@@ -9,190 +9,105 @@ import IRichLanguageConfiguration = monaco.languages.LanguageConfiguration;
 import ILanguage = monaco.languages.IMonarchLanguage;
 
 export const conf: IRichLanguageConfiguration = {
-	wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#%\^\&\*\(\)\=\$\-\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
 	comments: {
-		blockComment: ['###', '###'],
-		lineComment: '#'
+		lineComment: '--'
 	},
 	brackets: [
-		['{', '}'],
-		['[', ']'],
-		['(', ')']
 	],
 	autoClosingPairs: [
-		{ open: '{', close: '}' },
-		{ open: '[', close: ']' },
-		{ open: '(', close: ')' },
-		{ open: '"', close: '"' },
-		{ open: '\'', close: '\'' },
 	],
 	surroundingPairs: [
-		{ open: '{', close: '}' },
-		{ open: '[', close: ']' },
-		{ open: '(', close: ')' },
-		{ open: '"', close: '"' },
-		{ open: '\'', close: '\'' },
 	],
-	folding: {
-		markers: {
-			start: new RegExp("^\\s*#region\\b"),
-			end: new RegExp("^\\s*#endregion\\b")
-		}
-	}
 };
+
 
 export const language = <ILanguage>{
 	defaultToken: '',
-	ignoreCase: true,
+	ignoreCase: false,
 	tokenPostfix: '.idr',
 
-	brackets: [
-		{ open: '{', close: '}', token: 'delimiter.curly' },
-		{ open: '[', close: ']', token: 'delimiter.square' },
-		{ open: '(', close: ')', token: 'delimiter.parenthesis' }
-	],
-
-	regEx: /\/(?!\/\/)(?:[^\/\\]|\\.)*\/[igm]*/,
-
 	keywords: [
-		'and', 'or', 'is', 'isnt', 'not', 'on', 'yes', '@', 'no', 'off',
-		'true', 'false', 'null', 'this',
-		'new', 'delete', 'typeof', 'in', 'instanceof',
-		'return', 'throw', 'break', 'continue', 'debugger',
-		'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
-		'class', 'extends', 'super',
-		'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by', 'when'
-	],
+		'module',
+		'if', 'then', 'else', 'do', 'let', 'in', 'dsl',
+		'impossible', 'case', 'of', 'total', 'partial', 'mutual', 'infix', 'infixl', 'infixr', 'constructor',
+		'where', 'with', 'syntax', 'proof', 'postulate', 'using', 'namespace', 'rewrite',
+		'public', 'private', 'export', 'implicit',
+		'data', 'codata', 'class', 'instance', 'interface', 'implementation', 'record'
+	  ],
 
-	// we include these common regular expressions
-	symbols: /[=><!~?&%|+\-*\/\^\.,\:]+/,
-	escapes: /\\(?:[abfnrtv\\"'$]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+	  typeKeywords: [
+		'Type', 'Int', 'Nat', 'Integer',' Float', 'Char', 'String', 'Ptr', 'Bits8', 'Bits16', 'Bits32', 'Bits64', 'Bool'
+	  ],
 
-	// The main tokenizer for our languages
-	tokenizer: {
+	  operators: [
+		'=', '>', '<', '!', '~', '?', ':', '==', '<=', '>=', '!=',
+		'&&', '||', '++', '--', '+', '-', '*', '/', '&', '|', '^', '%',
+		'<<', '>>', '>>>', '+=', '-=', '*=', '/=', '&=', '|=', '^=',
+		'%=', '<<=', '>>=', '>>>='
+	  ],
+
+	  // we include these common regular expressions
+	  symbols:  /[=><!~?:&|+\-*\/\^%]+/,
+
+	  // C# style strings
+	  escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+
+	  // The main tokenizer for our languages
+	  tokenizer: {
 		root: [
+		  // identifiers and keywords
+		  [/[a-z_$][\w$]*/, { cases: { '@typeKeywords': 'keyword',
+									   '@keywords': 'keyword',
+									   '@default': 'identifier' } }],
+		  [/[A-Z][\w\$]*/, 'type.identifier' ],  // to show class names nicely
 
-			// identifiers and keywords
-			[/\@[a-zA-Z_]\w*/, 'variable.predefined'],
-			[/[a-zA-Z_]\w*/, {
-				cases: {
-					'this': 'variable.predefined',
-					'@keywords': { token: 'keyword.$0' },
-					'@default': ''
-				}
-			}],
+		  // whitespace
+		  { include: '@whitespace' },
 
-			// whitespace
-			[/[ \t\r\n]+/, ''],
+		  // delimiters and operators
+		  [/[{}()\[\]]/, '@brackets'],
+		  [/[<>](?!@symbols)/, '@brackets'],
+		  [/@symbols/, { cases: { '@operators': 'operator',
+								  '@default'  : '' } } ],
 
-			// Comments
-			[/###/, 'comment', '@comment'],
-			[/#.*$/, 'comment'],
+		  // @ annotations.
+		  // As an example, we emit a debugging log message on these tokens.
+		  // Note: message are supressed during the first load -- change some lines to see them.
+		  [/@\s*[a-zA-Z_\$][\w\$]*/, { token: 'annotation', log: 'annotation token: $0' }],
 
-			// regular expressions
-			['///', { token: 'regexp', next: '@hereregexp' }],
+		  // numbers
+		  [/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+		  [/0[xX][0-9a-fA-F]+/, 'number.hex'],
+		  [/\d+/, 'number'],
 
-			[/^(\s*)(@regEx)/, ['', 'regexp']],
-			[/(\()(\s*)(@regEx)/, ['@brackets', '', 'regexp']],
-			[/(\,)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\=)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\:)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\[)(\s*)(@regEx)/, ['@brackets', '', 'regexp']],
-			[/(\!)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\&)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\|)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\?)(\s*)(@regEx)/, ['delimiter', '', 'regexp']],
-			[/(\{)(\s*)(@regEx)/, ['@brackets', '', 'regexp']],
-			[/(\;)(\s*)(@regEx)/, ['', '', 'regexp']],
+		  // delimiter: after number because of .\d floats
+		  [/[;,.]/, 'delimiter'],
 
+		  // strings
+		  [/"([^"\\]|\\.)*$/, 'string.invalid' ],  // non-teminated string
+		  [/"/,  { token: 'string.quote', bracket: '@open', next: '@string' } ],
 
-			// delimiters
-			[/}/, {
-				cases: {
-					'$S2==interpolatedstring': { token: 'string', next: '@pop' },
-					'@default': '@brackets'
-				}
-			}],
-			[/[{}()\[\]]/, '@brackets'],
-			[/@symbols/, 'delimiter'],
-
-			// numbers
-			[/\d+[eE]([\-+]?\d+)?/, 'number.float'],
-			[/\d+\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-			[/0[xX][0-9a-fA-F]+/, 'number.hex'],
-			[/0[0-7]+(?!\d)/, 'number.octal'],
-			[/\d+/, 'number'],
-
-			// delimiter: after number because of .\d floats
-			[/[,.]/, 'delimiter'],
-
-			// strings:
-			[/"""/, 'string', '@herestring."""'],
-			[/'''/, 'string', '@herestring.\'\'\''],
-			[/"/, {
-				cases: {
-					'@eos': 'string',
-					'@default': { token: 'string', next: '@string."' }
-				}
-			}],
-			[/'/, {
-				cases: {
-					'@eos': 'string',
-					'@default': { token: 'string', next: '@string.\'' }
-				}
-			}],
-		],
-
-		string: [
-			[/[^"'\#\\]+/, 'string'],
-			[/@escapes/, 'string.escape'],
-			[/\./, 'string.escape.invalid'],
-			[/\./, 'string.escape.invalid'],
-
-			[/#{/, {
-				cases: {
-					'$S2=="': { token: 'string', next: 'root.interpolatedstring' },
-					'@default': 'string'
-				}
-			}],
-
-			[/["']/, {
-				cases: {
-					'$#==$S2': { token: 'string', next: '@pop' },
-					'@default': 'string'
-				}
-			}],
-			[/#/, 'string']
-		],
-
-		herestring: [
-			[/("""|''')/, {
-				cases: {
-					'$1==$S2': { token: 'string', next: '@pop' },
-					'@default': 'string'
-				}
-			}],
-			[/[^#\\'"]+/, 'string'],
-			[/['"]+/, 'string'],
-			[/@escapes/, 'string.escape'],
-			[/\./, 'string.escape.invalid'],
-
-			[/#{/, { token: 'string.quote', next: 'root.interpolatedstring' }],
-			[/#/, 'string']
+		  // characters
+		  [/'[^\\']'/, 'string'],
+		  [/(')(@escapes)(')/, ['string','string.escape','string']],
+		  [/'/, 'string.invalid']
 		],
 
 		comment: [
-			[/[^#]+/, 'comment',],
-			[/###/, 'comment', '@pop'],
-			[/#/, 'comment'],
+		  [/[--]+/,   'comment' ]
+
 		],
 
-		hereregexp: [
-			[/[^\\\/#]+/, 'regexp'],
-			[/\\./, 'regexp'],
-			[/#.*$/, 'comment'],
-			['///[igm]*', { token: 'regexp', next: '@pop' }],
-			[/\//, 'regexp'],
+		string: [
+		  [/[^\\"]+/,  'string'],
+		  [/@escapes/, 'string.escape'],
+		  [/\\./,      'string.escape.invalid'],
+		  [/"/,        { token: 'string.quote', bracket: '@close', next: '@pop' } ]
 		],
-	},
+
+		whitespace: [
+		  [/[ \t\r\n]+/, 'white'],
+		  [/--.*$/,    'comment'],
+		],
+	  },
 };
